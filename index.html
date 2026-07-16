@@ -194,6 +194,15 @@
       color: var(--muted);
     }
 
+    .status.global {
+      margin-top: 10px;
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
     .hidden {
       display: none;
     }
@@ -224,6 +233,7 @@
         <button type="submit">Générer</button>
         <button class="danger" id="clearBtn" type="button">Tout vider</button>
       </form>
+      <p class="status global" id="globalStatus"></p>
     </section>
 
     <section class="panel">
@@ -263,6 +273,7 @@
     const editorTitle = document.querySelector("#editorTitle");
     const wordForm = document.querySelector("#wordForm");
     const wordInput = document.querySelector("#wordInput");
+    const globalStatus = document.querySelector("#globalStatus");
     const statusText = document.querySelector("#statusText");
     const homeBtn = document.querySelector("#homeBtn");
     const backBtn = document.querySelector("#backBtn");
@@ -282,12 +293,18 @@
         word: ""
       }));
 
-      const { error } = await supabase
-        .from("page_words")
-        .upsert(rows, { onConflict: "page_name" });
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .upsert(rows, { onConflict: "page_name" });
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
 
       if (error) {
-        setStatus("Impossible de générer les pages. Vérifie la table Supabase page_words.");
+        setStatus("Impossible de générer les pages. Vérifie l'URL, la clé publique, la table page_words et les règles Supabase.", true);
         return;
       }
 
@@ -300,15 +317,21 @@
       if (!activePageName) return;
 
       setStatus("Enregistrement...");
-      const { error } = await supabase
-        .from("page_words")
-        .upsert({
-          page_name: activePageName,
-          word: wordInput.value.trim()
-        }, { onConflict: "page_name" });
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .upsert({
+            page_name: activePageName,
+            word: wordInput.value.trim()
+          }, { onConflict: "page_name" });
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
 
       if (error) {
-        setStatus("Impossible d'enregistrer le mot.");
+        setStatus("Impossible d'enregistrer le mot.", true);
         return;
       }
 
@@ -321,13 +344,19 @@
 
     clearBtn.addEventListener("click", async () => {
       if (!confirm("Supprimer toutes les pages et tous les mots ?")) return;
-      const { error } = await supabase
-        .from("page_words")
-        .delete()
-        .neq("page_name", "");
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .delete()
+          .neq("page_name", "");
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
 
       if (error) {
-        setStatus("Impossible de vider les données.");
+        setStatus("Impossible de vider les données.", true);
         return;
       }
 
@@ -338,15 +367,23 @@
     });
 
     async function loadPages() {
-      const { data, error } = await supabase
-        .from("page_words")
-        .select("page_name,word,updated_at")
-        .order("page_name", { ascending: true });
+      let data = null;
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .select("page_name,word,updated_at")
+          .order("page_name", { ascending: true });
+        data = result.data;
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
 
       if (error) {
         pages = [];
         renderPages();
-        setStatus("Connexion Supabase impossible. Remplace l'URL et la clé dans index.html.");
+        setStatus("Connexion Supabase impossible. Remplace l'URL et la clé dans index.html, puis vérifie la table page_words.", true);
         return;
       }
 
@@ -394,8 +431,11 @@
       renderPages();
     }
 
-    function setStatus(message) {
+    function setStatus(message, isError = false) {
+      globalStatus.textContent = message;
+      globalStatus.classList.toggle("error", isError);
       statusText.textContent = message;
+      statusText.classList.toggle("error", isError);
     }
 
     await loadPages();
