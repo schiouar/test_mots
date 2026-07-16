@@ -263,7 +263,7 @@
       <p class="status global" id="globalStatus"></p>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="pagesPanel">
       <h2>Pages générées</h2>
       <p class="muted" id="pagesInfo">Aucune page pour le moment.</p>
       <div class="pages" id="pagesList"></div>
@@ -294,6 +294,8 @@
 
     const generateForm = document.querySelector("#generateForm");
     const pageCount = document.querySelector("#pageCount");
+    const menuView = document.querySelector("#menuView");
+    const pagesPanel = document.querySelector("#pagesPanel");
     const pagesInfo = document.querySelector("#pagesInfo");
     const pagesList = document.querySelector("#pagesList");
     const editorView = document.querySelector("#editorView");
@@ -307,6 +309,7 @@
 
     let pages = [];
     let activePageName = "";
+    let directPageMode = false;
 
     generateForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -449,13 +452,18 @@
       editorTitle.textContent = pageName;
       wordInput.value = item?.word || "";
       editorView.classList.remove("hidden");
+      menuView.classList.toggle("hidden", directPageMode);
+      pagesPanel.classList.toggle("hidden", directPageMode);
       updatePageUrl(pageName);
       renderPages();
       wordInput.focus();
     }
 
     function closeEditor() {
+      directPageMode = false;
       activePageName = "";
+      menuView.classList.remove("hidden");
+      pagesPanel.classList.remove("hidden");
       editorView.classList.add("hidden");
       updatePageUrl("");
       renderPages();
@@ -466,7 +474,10 @@
       const pageName = params.get("page");
       if (!pageName || pageName === activePageName) return;
       const exists = pages.some((page) => page.page_name === pageName);
-      if (exists) openEditor(pageName);
+      if (exists) {
+        directPageMode = true;
+        openEditor(pageName);
+      }
     }
 
     function updatePageUrl(pageName) {
