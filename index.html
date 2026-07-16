@@ -154,6 +154,24 @@
       background: #ffe7e3;
     }
 
+    .open-link {
+      min-height: 38px;
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      background: var(--panel-soft);
+      color: #252a31;
+      border: 1px solid var(--line);
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .open-link:hover {
+      background: #e7eaee;
+    }
+
     .pages {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -396,6 +414,7 @@
 
       pages = data || [];
       renderPages();
+      openPageFromUrl();
     }
 
     function renderPages() {
@@ -410,14 +429,16 @@
         if (item.page_name === activePageName) card.classList.add("active");
         card.innerHTML = `
           <div class="page-title">
-            <span></span>
-            <button class="secondary" type="button">Ouvrir</button>
+            <a class="page-name-link" href=""></a>
+            <a class="open-link" href="">Ouvrir</a>
           </div>
           <div class="word-preview"></div>
         `;
-        card.querySelector(".page-title span").textContent = item.page_name;
+        const pageUrl = `?page=${encodeURIComponent(item.page_name)}`;
+        card.querySelector(".page-name-link").textContent = item.page_name;
+        card.querySelector(".page-name-link").href = pageUrl;
+        card.querySelector(".open-link").href = pageUrl;
         card.querySelector(".word-preview").textContent = item.word ? `Mot : ${item.word}` : "Aucun mot enregistré";
-        card.querySelector("button").addEventListener("click", () => openEditor(item.page_name));
         pagesList.append(card);
       }
     }
@@ -428,6 +449,7 @@
       editorTitle.textContent = pageName;
       wordInput.value = item?.word || "";
       editorView.classList.remove("hidden");
+      updatePageUrl(pageName);
       renderPages();
       wordInput.focus();
     }
@@ -435,7 +457,26 @@
     function closeEditor() {
       activePageName = "";
       editorView.classList.add("hidden");
+      updatePageUrl("");
       renderPages();
+    }
+
+    function openPageFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const pageName = params.get("page");
+      if (!pageName || pageName === activePageName) return;
+      const exists = pages.some((page) => page.page_name === pageName);
+      if (exists) openEditor(pageName);
+    }
+
+    function updatePageUrl(pageName) {
+      const url = new URL(window.location.href);
+      if (pageName) {
+        url.searchParams.set("page", pageName);
+      } else {
+        url.searchParams.delete("page");
+      }
+      window.history.replaceState({}, "", url);
     }
 
     function setStatus(message, isError = false) {
@@ -450,103 +491,3 @@
   </script>
 </body>
 </html>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pages de mots</title>
-  <style>
-    :root {
-      --bg: #f7f8fa;
-      --panel: #ffffff;
-      --panel-soft: #f0f2f5;
-      --text: #181b20;
-      --muted: #6b7280;
-      --line: #dfe3e8;
-      --brand: #0f766e;
-      --brand-dark: #0b5f59;
-      --blue: #2563eb;
-      --blue-dark: #1d4ed8;
-      --danger: #b42318;
-      --radius: 8px;
-      --shadow: 0 16px 40px rgba(16, 24, 40, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 14px;
-    }
-
-    button,
-    input {
-      font: inherit;
-    }
-
-    .app {
-      width: min(880px, calc(100vw - 28px));
-      margin: 28px auto;
-      display: grid;
-      gap: 16px;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    h1,
-    h2,
-    p {
-      margin: 0;
-    }
-
-    h1 {
-      font-size: 24px;
-      letter-spacing: 0;
-    }
-
-    h2 {
-      font-size: 17px;
-    }
-
-    .muted {
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px;
-    }
-
-    .menu {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    label {
-      display: grid;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #343941;
-    }
-
-    input {
-      min-height: 38px;
