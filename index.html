@@ -14,6 +14,458 @@
       --line: #dfe3e8;
       --brand: #0f766e;
       --brand-dark: #0b5f59;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --danger: #b42318;
+      --radius: 8px;
+      --shadow: 0 16px 40px rgba(16, 24, 40, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      width: min(880px, calc(100vw - 28px));
+      margin: 28px auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 17px;
+    }
+
+    .muted {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #343941;
+    }
+
+    input {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+    }
+
+    button {
+      min-height: 38px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      background: var(--brand);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--brand-dark);
+    }
+
+    button.primary-blue {
+      background: var(--blue);
+    }
+
+    button.primary-blue:hover {
+      background: var(--blue-dark);
+    }
+
+    button.secondary {
+      background: var(--panel-soft);
+      color: #252a31;
+      border: 1px solid var(--line);
+    }
+
+    button.secondary:hover {
+      background: #e7eaee;
+    }
+
+    button.danger {
+      background: #fff1f0;
+      color: var(--danger);
+      border: 1px solid #ffd3cf;
+    }
+
+    button.danger:hover {
+      background: #ffe7e3;
+    }
+
+    .pages {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 10px;
+    }
+
+    .page-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .page-card.active {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+    }
+
+    .page-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-weight: 800;
+    }
+
+    .word-preview {
+      color: var(--muted);
+      min-height: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .editor {
+      display: grid;
+      gap: 12px;
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      min-height: 20px;
+      color: var(--muted);
+    }
+
+    .status.global {
+      margin-top: 10px;
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 680px) {
+      .menu {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Pages de mots</h1>
+        <p class="muted">Choisis un nombre de pages, puis saisis un mot différent sur chaque page.</p>
+      </div>
+    </header>
+
+    <section class="panel" id="menuView">
+      <form class="menu" id="generateForm">
+        <label>
+          Nombre de pages à générer
+          <input id="pageCount" type="number" min="1" max="100" value="5" required>
+        </label>
+        <button class="primary-blue" type="submit">Générer</button>
+        <button class="danger" id="clearBtn" type="button">Tout vider</button>
+      </form>
+      <p class="status global" id="globalStatus"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Pages générées</h2>
+      <p class="muted" id="pagesInfo">Aucune page pour le moment.</p>
+      <div class="pages" id="pagesList"></div>
+    </section>
+
+    <section class="panel hidden" id="editorView">
+      <form class="editor" id="wordForm">
+        <h2 id="editorTitle">Page</h2>
+        <label>
+          Mot
+          <input id="wordInput" maxlength="80" autocomplete="off" placeholder="Écris un mot">
+        </label>
+        <div class="editor-actions">
+          <button type="submit">Enregistrer</button>
+          <button class="secondary" id="backBtn" type="button">Retour</button>
+        </div>
+        <p class="status" id="statusText"></p>
+      </form>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = "https://lwydkmmscheyfbkakbmf.supabase.co/rest/v1/";
+    const SUPABASE_ANON_KEY = "sb_publishable_OXzFUUHdq_VYLXA_EE5ZsQ__7wGL60k";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const generateForm = document.querySelector("#generateForm");
+    const pageCount = document.querySelector("#pageCount");
+    const pagesInfo = document.querySelector("#pagesInfo");
+    const pagesList = document.querySelector("#pagesList");
+    const editorView = document.querySelector("#editorView");
+    const editorTitle = document.querySelector("#editorTitle");
+    const wordForm = document.querySelector("#wordForm");
+    const wordInput = document.querySelector("#wordInput");
+    const globalStatus = document.querySelector("#globalStatus");
+    const statusText = document.querySelector("#statusText");
+    const backBtn = document.querySelector("#backBtn");
+    const clearBtn = document.querySelector("#clearBtn");
+
+    let pages = [];
+    let activePageName = "";
+
+    generateForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const count = Number(pageCount.value);
+      if (!Number.isInteger(count) || count < 1 || count > 100) return;
+
+      setStatus("Génération des pages...");
+      const rows = Array.from({ length: count }, (_, index) => ({
+        page_name: `Page ${index + 1}`,
+        word: ""
+      }));
+
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .upsert(rows, { onConflict: "page_name" });
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+
+      if (error) {
+        setStatus("Impossible de générer les pages. Vérifie l'URL, la clé publique, la table page_words et les règles Supabase.", true);
+        return;
+      }
+
+      await loadPages();
+      setStatus(`${count} page${count > 1 ? "s" : ""} générée${count > 1 ? "s" : ""}.`);
+    });
+
+    wordForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!activePageName) return;
+
+      setStatus("Enregistrement...");
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .upsert({
+            page_name: activePageName,
+            word: wordInput.value.trim()
+          }, { onConflict: "page_name" });
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+
+      if (error) {
+        setStatus("Impossible d'enregistrer le mot.", true);
+        return;
+      }
+
+      await loadPages();
+      setStatus("Mot enregistré.");
+    });
+
+    backBtn.addEventListener("click", closeEditor);
+
+    clearBtn.addEventListener("click", async () => {
+      if (!confirm("Supprimer toutes les pages et tous les mots ?")) return;
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .delete()
+          .neq("page_name", "");
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+
+      if (error) {
+        setStatus("Impossible de vider les données.", true);
+        return;
+      }
+
+      activePageName = "";
+      closeEditor();
+      await loadPages();
+      setStatus("Toutes les pages ont été supprimées.");
+    });
+
+    async function loadPages() {
+      let data = null;
+      let error = null;
+      try {
+        const result = await supabase
+          .from("page_words")
+          .select("page_name,word,updated_at")
+          .order("page_name", { ascending: true });
+        data = result.data;
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+
+      if (error) {
+        pages = [];
+        renderPages();
+        setStatus("Connexion Supabase impossible. Remplace l'URL et la clé dans index.html, puis vérifie la table page_words.", true);
+        return;
+      }
+
+      pages = data || [];
+      renderPages();
+    }
+
+    function renderPages() {
+      pagesList.innerHTML = "";
+      pagesInfo.textContent = pages.length
+        ? `${pages.length} page${pages.length > 1 ? "s" : ""} disponible${pages.length > 1 ? "s" : ""}.`
+        : "Aucune page pour le moment.";
+
+      for (const item of pages) {
+        const card = document.createElement("article");
+        card.className = "page-card";
+        if (item.page_name === activePageName) card.classList.add("active");
+        card.innerHTML = `
+          <div class="page-title">
+            <span></span>
+            <button class="secondary" type="button">Ouvrir</button>
+          </div>
+          <div class="word-preview"></div>
+        `;
+        card.querySelector(".page-title span").textContent = item.page_name;
+        card.querySelector(".word-preview").textContent = item.word ? `Mot : ${item.word}` : "Aucun mot enregistré";
+        card.querySelector("button").addEventListener("click", () => openEditor(item.page_name));
+        pagesList.append(card);
+      }
+    }
+
+    function openEditor(pageName) {
+      activePageName = pageName;
+      const item = pages.find((page) => page.page_name === pageName);
+      editorTitle.textContent = pageName;
+      wordInput.value = item?.word || "";
+      editorView.classList.remove("hidden");
+      renderPages();
+      wordInput.focus();
+    }
+
+    function closeEditor() {
+      activePageName = "";
+      editorView.classList.add("hidden");
+      renderPages();
+    }
+
+    function setStatus(message, isError = false) {
+      globalStatus.textContent = message;
+      globalStatus.classList.toggle("error", isError);
+      statusText.textContent = message;
+      statusText.classList.toggle("error", isError);
+    }
+
+    await loadPages();
+    setInterval(loadPages, 5000);
+  </script>
+</body>
+</html>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pages de mots</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --panel-soft: #f0f2f5;
+      --text: #181b20;
+      --muted: #6b7280;
+      --line: #dfe3e8;
+      --brand: #0f766e;
+      --brand-dark: #0b5f59;
       --danger: #b42318;
       --radius: 8px;
       --shadow: 0 16px 40px rgba(16, 24, 40, 0.08);
